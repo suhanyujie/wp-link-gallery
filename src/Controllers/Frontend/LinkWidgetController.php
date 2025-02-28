@@ -11,8 +11,8 @@ class LinkWidgetController extends WP_Widget
     {
         parent::__construct(
             'link_gallery_widget',
-            '友情链接',
-            ['description' => '在侧边栏显示友情链接列表']
+            '友情リンク',
+            ['description' => 'サイドバーに友情リンクを表示']
         );
 
         add_action('widgets_init', function() {
@@ -42,17 +42,17 @@ class LinkWidgetController extends WP_Widget
 
     public function form($instance)
     {
-        $title = $instance['title'] ?? '友情链接';
+        $title = $instance['title'] ?? 'リンク集';
         $limit = $instance['limit'] ?? 10;
         ?>
         <p>
-            <label for="<?php echo $this->get_field_id('title'); ?>">标题：</label>
+            <label for="<?php echo $this->get_field_id('title'); ?>">タイトル：</label>
             <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>"
                    name="<?php echo $this->get_field_name('title'); ?>"
                    type="text" value="<?php echo esc_attr($title); ?>">
         </p>
         <p>
-            <label for="<?php echo $this->get_field_id('limit'); ?>">显示数量：</label>
+            <label for="<?php echo $this->get_field_id('limit'); ?>">表示数：</label>
             <input class="widefat" id="<?php echo $this->get_field_id('limit'); ?>"
                    name="<?php echo $this->get_field_name('limit'); ?>"
                    type="number" min="1" max="50"

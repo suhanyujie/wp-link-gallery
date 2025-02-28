@@ -33,11 +33,21 @@ class LinkController
         view('admin.links.index', compact('links'));
     }
 
+    public function showCreateForm()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        view('admin.links.create');
+    }
+
     public function create()
     {
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
+
+        check_admin_referer('link_gallery_create');
 
         $data = $this->validateData();
         Link::create($data);
@@ -46,11 +56,28 @@ class LinkController
         exit;
     }
 
+    public function showEditForm()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        $id = $_GET['id'] ?? 0;
+        $link = Link::find($id);
+        if (!$link) {
+            wp_die('Link not found');
+        }
+
+        view('admin.links.edit', compact('link'));
+    }
+
     public function update()
     {
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
+
+        check_admin_referer('link_gallery_update');
 
         $id = $_POST['id'] ?? 0;
         $link = Link::find($id);
@@ -70,6 +97,8 @@ class LinkController
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
+
+        check_admin_referer('link_gallery_delete');
 
         $id = $_POST['id'] ?? 0;
         $link = Link::find($id);

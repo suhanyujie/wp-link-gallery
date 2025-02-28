@@ -2,34 +2,24 @@
 
 namespace LinkGallery\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
 class Link extends Model
 {
-    protected $table = 'wp_link_gallery';
-    protected $fillable = [
-        'name',
-        'url',
-        'description',
-        'image',
-        'target',
-        'status',
-        'sort_order'
-    ];
-
-    protected $casts = [
-        'sort_order' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
-    ];
-
-    public function scopeActive($query)
+    protected function setTable()
     {
-        return $query->where('status', 'active');
+        $this->table = $this->wpdb->prefix . 'link_gallery';
     }
 
-    public function scopeSorted($query)
+    public static function active()
     {
-        return $query->orderBy('sort_order', 'asc');
+        $instance = new static;
+        $instance->where = "WHERE status = 'active'";
+        return $instance;
+    }
+
+    public static function sorted()
+    {
+        $instance = new static;
+        $instance->orderBy = "ORDER BY sort_order ASC";
+        return $instance;
     }
 }

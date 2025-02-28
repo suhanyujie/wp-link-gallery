@@ -25,7 +25,27 @@ require_once LINK_GALLERY_PLUGIN_DIR . 'vendor/autoload.php';
 
 // 初始化插件
 function link_gallery_init() {
-    // 初始化代码将在这里添加
+    // 初始化数据库
+    \LinkGallery\Database\Migration::createLinkTable();
+
+    // 添加后台菜单
+    // add_action('admin_menu', function() {
+    //     add_menu_page(
+    //         '友情链接管理', // 页面标题
+    //         '友情链接', // 菜单标题
+    //         'manage_options', // 权限
+    //         'link-gallery', // 菜单slug
+    //         function() {
+    //             // 后台页面内容将在这里添加
+    //             echo '<div class="wrap"><h1>友情链接管理</h1></div>';
+    //         },
+    //         'dashicons-admin-links', // 菜单图标
+    //         30 // 菜单位置
+    //     );
+    // });
+
+    new \LinkGallery\Controllers\Admin\LinkController();
+    new \LinkGallery\Controllers\Frontend\LinkWidgetController();
 }
 
 // 激活插件时的处理

@@ -10,7 +10,10 @@
     "autoload": {
         "psr-4": {
             "LinkGallery\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "authors": [
         {
