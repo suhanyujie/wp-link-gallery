@@ -1,0 +1,27 @@
+{
+    "name": "link-gallery/link-gallery",
+    "description": "一个现代化的友情链接管理插件",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=7.4",
+        "illuminate/database": "^8.0",
+        "jenssegers/blade": "^1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "LinkGallery\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "your.email@example.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
+    }
+}
