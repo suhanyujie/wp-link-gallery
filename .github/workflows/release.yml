@@ -35,6 +35,11 @@ jobs:
           mkdir my-plugin
           rsync -av --progress ./ ./my-plugin/ --exclude=my-plugin
           zip -r my-plugin.zip my-plugin/
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: my-plugin.zip
   release:
     name: Create GitHub Release
     needs: build
