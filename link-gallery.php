@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // 定义插件常量
-define('LINK_GALLERY_VERSION', '1.0.0');
+define('LINK_GALLERY_VERSION', '0.1.1');
 define('LINK_GALLERY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LINK_GALLERY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
