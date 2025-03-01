@@ -27,7 +27,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
       - name: Get Repository Name
-        run: echo "PLUGIN_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+        run: |
+          echo "PLUGIN_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+          echo "$(basename $GITHUB_REPOSITORY)" > plugin_name.txt
+      - name: Save Plugin Name
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin_name
+          path: plugin_name.txt
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
       - name: Create Plugin Zip
@@ -47,6 +54,13 @@ jobs:
     permissions: write-all
 
     steps:
+      - name: Download Plugin Name
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin_name
+          path: ./
+      - name: Load Plugin Name
+        run: echo "PLUGIN_NAME=$(cat plugin_name.txt)" >> $GITHUB_ENV
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
@@ -64,6 +78,6 @@ jobs:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
           body_path: release-notes.md
-          files: ${{ env.PLUGIN_NAME }}.zip.zip
+          files: ${{ env.PLUGIN_NAME }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
