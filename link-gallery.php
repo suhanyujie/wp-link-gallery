@@ -1,14 +1,14 @@
 <?php
 /**
  * Plugin Name: Link Gallery
- * Plugin URI: https://www.example.com/link-gallery
+ * Plugin URI: https://github.com/suhanyujie/wp-link-gallery
  * Description: 一个现代化的友情链接管理插件，使用Blade模板引擎和Illuminate ORM
- * Version: 1.0.0
- * Author: Your Name
- * Author URI: https://www.example.com
+ * Version: 0.1.1
+ * Author: suhanyujie
+ * Author URI: https://github.com/suhanyujie
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: link-gallery
+ * Text Domain: https://github.com/suhanyujie/wp-link-gallery
  */
 
 if (!defined('ABSPATH')) {
