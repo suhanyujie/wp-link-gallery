@@ -26,19 +26,20 @@ jobs:
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-
-
+      - name: Get Repository Name
+        run: echo "PLUGIN_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
       - name: Create Plugin Zip
         run: |
-          mkdir my-plugin
-          rsync -av --progress ./ ./my-plugin/ --exclude=my-plugin
-          zip -r my-plugin.zip my-plugin/
+          mkdir $PLUGIN_NAME
+          rsync -av --progress ./ ./$PLUGIN_NAME/ --exclude=$PLUGIN_NAME
+          zip -r $PLUGIN_NAME.zip $PLUGIN_NAME/
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: plugin-zip
-          path: my-plugin.zip
+          path: ${{ env.PLUGIN_NAME }}.zip
   release:
     name: Create GitHub Release
     needs: build
@@ -63,6 +64,6 @@ jobs:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
           body_path: release-notes.md
-          files: my-plugin.zip
+          files: ${{ env.PLUGIN_NAME }}.zip.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
