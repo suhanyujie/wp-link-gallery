@@ -16,3 +16,4 @@ wordpress plugin for manage friend links
 - https://docs.trae.ai/docs
 - localwp https://hub.localwp.com/
 - friend link https://hifa-info.org/
+- wpdb ref https://stackoverflow.com/questions/5144893/getting-wordpress-database-name-username-password-with-php
