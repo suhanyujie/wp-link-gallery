@@ -35,4 +35,25 @@ class BaseModel
     public function getDbName() { return $this->_oDb->dbname;     }
     public function getDbPass() { return $this->_oDb->dbpassword; }
     public function getDbHost() { return $this->_oDb->dbhost;     }
+
+    public function initEloquentOrm() 
+    {
+        global $wpdb;
+
+        $capsule = new Capsule();
+
+        $capsule->addConnection([
+            'driver' => 'mysql',
+            'host' => DB_HOST,
+            'database' => DB_NAME,
+            'username' => DB_USER,
+            'password' => DB_PASSWORD,
+            'charset' => DB_CHARSET,
+            'collation' => DB_COLLATE ?: $wpdb->collate,
+            'prefix' => $wpdb->prefix
+        ]);
+
+        $capsule->setAsGlobal();
+        $capsule->bootEloquent();
+    }
 }
