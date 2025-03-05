@@ -17,8 +17,8 @@ class LinkController
     public function addMenuPage()
     {
         add_menu_page(
-            '友情链接管理',
-            '友情链接',
+            'リンク管理',
+            'リンク',
             'manage_options',
             'link-gallery',
             [$this, 'index'],
