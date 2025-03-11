@@ -3,7 +3,7 @@
  * Plugin Name: Link Gallery
  * Plugin URI: https://github.com/suhanyujie/wp-link-gallery
  * Description: 一个现代化的友情链接管理插件，使用Blade模板引擎和Illuminate ORM
- * Version: 0.1.4
+ * Version: 0.1.5
  * Author: suhanyujie
  * Author URI: https://github.com/suhanyujie
  * License: GPL v2 or later
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 // 定义插件常量
-define('LINK_GALLERY_VERSION', '0.1.4');
+define('LINK_GALLERY_VERSION', '0.1.5');
 define('LINK_GALLERY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LINK_GALLERY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -32,21 +32,17 @@ function link_gallery_init() {
 }
 
 // 激活插件时的处理
-register_activation_hook(__FILE__, function() {
+function link_gallery_activate() {
     // 初始化数据库
     \LinkGallery\Database\Migration::createLinkTable();
-});
+}
+register_activation_hook(__FILE__, 'link_gallery_activate');
 
 // 停用插件时的处理
-register_deactivation_hook(__FILE__, function() {
+function link_gallery_deactivate() {
     // 停用时的处理代码将在这里添加
-});
-
-// 卸载插件时删除数据表
-register_uninstall_hook(__FILE__, function() {
-    // 删除数据表
-    \LinkGallery\Database\Migration::dropLinkTable();
-});
+}
+register_deactivation_hook(__FILE__, 'link_gallery_deactivate');
 
 // 初始化插件
 add_action('plugins_loaded', 'link_gallery_init');
