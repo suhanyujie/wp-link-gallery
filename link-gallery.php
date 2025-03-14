@@ -26,9 +26,18 @@ require_once LINK_GALLERY_PLUGIN_DIR . 'vendor/autoload.php';
 // 初始化插件
 function link_gallery_init() {
     // friend link 后台的菜单和页面显示
-    new \LinkGallery\Controllers\Admin\LinkController();
-    // 友情链接相关的 gutenberg 编辑器组件
+    // new \LinkGallery\Controllers\Admin\LinkController();
+    new \LinkGallery\Controllers\Admin\CustomFormsController();
+    // friend link 的 gutenberg 编辑器组件
     new \LinkGallery\Controllers\Frontend\LinkWidgetController();
+
+    // 注册和加载脚本
+    add_action('admin_enqueue_scripts', 'link_gallery_admin_scripts');
+}
+
+// 注册和加载后台脚本
+function link_gallery_admin_scripts() {
+    wp_enqueue_script('jquery');
 }
 
 // 激活插件时的处理

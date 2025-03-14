@@ -1,6 +1,11 @@
 # wp-link-gallery
 
-wordpress plugin for manage friend links
+- wordpress plugin for manage friend links
+- contact-form-cfdb7 对应的数据展示，并审核数据是否通过。
+
+## Notice
+
+- 使用该插件之前，需要安装 wordpress 的 "Contact Form CFDB7" 插件。
 
 ## screenshot
 
@@ -18,3 +23,4 @@ wordpress plugin for manage friend links
 - friend link https://hifa-info.org/
 - wpdb ref https://stackoverflow.com/questions/5144893/getting-wordpress-database-name-username-password-with-php
 - https://github.com/getherbert/framework
+- https://github.com/arshidkv12/contact-form-cfdb7

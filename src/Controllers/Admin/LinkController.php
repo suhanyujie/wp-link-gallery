@@ -8,24 +8,11 @@ class LinkController
 {
     public function __construct()
     {
-        add_action('admin_menu', [$this, 'addMenuPage']);
         add_action('admin_post_link_gallery_create', [$this, 'create']);
         add_action('admin_post_link_gallery_update', [$this, 'update']);
         add_action('admin_post_link_gallery_delete', [$this, 'delete']);
     }
 
-    public function addMenuPage()
-    {
-        add_menu_page(
-            'リンク管理',
-            'リンク',
-            'manage_options',
-            'link-gallery',
-            [$this, 'index'],
-            'dashicons-admin-links',
-            30
-        );
-    }
 
     public function index()
     {
