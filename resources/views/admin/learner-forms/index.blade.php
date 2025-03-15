@@ -32,7 +32,7 @@
                                 foreach ($application['details'] as $key => $value) {
                                     if (!in_array($key, ['your-name', 'your-email', 'status'])) {
                                       switch ($key) {
-                                        case 'checkbox-241': $key = '時間';break;
+                                        case 'checkbox-time': $key = '時間';break;
                                         case 'your-message': $key = 'message';break;
                                       }
                                       $showStr = esc_html($value);

@@ -2,7 +2,7 @@
 
 namespace LinkGallery\Services;
 
-class EmailService
+class LearnerEmailService extends BaseEmailService
 {
     /**
      * 发送审核通过邮件
@@ -38,19 +38,5 @@ class EmailService
         );
 
         return $this->sendEmail($to, $subject, $message);
-    }
-
-    /**
-     * 发送邮件的通用方法
-     *
-     * @param string $to 收件人邮箱
-     * @param string $subject 邮件主题
-     * @param string $message 邮件内容
-     * @return bool
-     */
-    private function sendEmail($to, $subject, $message)
-    {
-        $headers = ['Content-Type: text/plain; charset=UTF-8'];
-        return wp_mail($to, $subject, $message, $headers);
     }
 }

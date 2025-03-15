@@ -15,13 +15,13 @@ $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from'])
 $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
 ?>
 <div class="wrap">
-    <h1 class="wp-heading-inline">学習者申請管理</h1>
+    <h1 class="wp-heading-inline">ボランティア申請管理</h1>
     <hr class="wp-header-end">
 
     <!-- フィルターフォーム -->
     <div class="tablenav top">
         <form method="get" action="">
-            <input type="hidden" name="page" value="learner-form">
+            <input type="hidden" name="page" value="volunteer-form">
             <div class="alignleft actions">
                 <select name="status">
                     <option value="">全てのステータス</option>
@@ -37,12 +37,12 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
         </form>
         <div class="alignright">
             <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display: inline;">
-                <input type="hidden" name="action" value="learner_form_export_csv">
+                <input type="hidden" name="action" value="volunteer_form_export_csv">
                 <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>">
                 <input type="hidden" name="date_from" value="<?php echo esc_attr($date_from); ?>">
                 <input type="hidden" name="date_to" value="<?php echo esc_attr($date_to); ?>">
                 <input type="hidden" name="search" value="<?php echo esc_attr(isset($_GET['search']) ? $_GET['search'] : ''); ?>">
-                <?php wp_nonce_field('learner_form_export_csv'); ?>
+                <?php wp_nonce_field('volunteer_form_export_csv'); ?>
                 <button type="submit" class="button">CSVエクスポート</button>
             </form>
         </div>
@@ -185,9 +185,9 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'get_learner_form_details',
+                action: 'get_volunteer_form_details',
                 id: id,
-                nonce: '<?php echo wp_create_nonce("get_learner_form_details"); ?>'
+                nonce: '<?php echo wp_create_nonce("get_volunteer_form_details"); ?>'
             },
             success: function(response) {
                 if (response.success) {
@@ -212,7 +212,12 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // ステータス更新
     $('.update-status').click(function() {
+        if (!confirm('ステータスを更新してもよろしいですか？')) {
+            return;
+        }
+
         var button = $(this);
         var id = button.data('id');
         var status = button.data('status');
@@ -221,10 +226,10 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'learner_form_update',
+                action: 'volunteer_form_update',
                 id: id,
                 status: status,
-                nonce: '<?php echo wp_create_nonce("learner_form_update"); ?>'
+                nonce: '<?php echo wp_create_nonce("volunteer_form_update"); ?>'
             },
             success: function(response) {
                 if (response.success) {

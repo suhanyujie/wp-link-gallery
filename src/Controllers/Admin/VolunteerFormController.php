@@ -2,25 +2,26 @@
 
 namespace LinkGallery\Controllers\Admin;
 
-class LearnerFormController
+class VolunteerFormController
 {
-    private $emailService;
+    protected $form_post_id = 908;
+    protected $page_slug = 'volunteer-form';
+    protected $page_title = 'ボランティア申請管理';
 
     public function __construct()
     {
-        $this->emailService = new \LinkGallery\Services\LearnerEmailService();
-        add_action('admin_post_learner_form_update', [$this, 'update']);
-        add_action('wp_ajax_learner_form_update', [$this, 'ajaxUpdate']);
-        add_action('wp_ajax_get_learner_form_details', [$this, 'getLearnerFormDetails']);
-        add_action('admin_post_learner_form_export_csv', [$this, 'exportCsv']);
-        add_action('wp_ajax_learner_form_export_csv', [$this, 'exportCsv']);
+        $this->emailService = new \LinkGallery\Services\VolunteerEmailService();
+        add_action('admin_post_volunteer_form_update', [$this, 'update']);
+        add_action('wp_ajax_volunteer_form_update', [$this, 'ajaxUpdate']);
+        add_action('wp_ajax_get_volunteer_form_details', [$this, 'getFormDetails']);
+        add_action('admin_post_volunteer_form_export_csv', [$this, 'exportCsv']);
+        add_action('wp_ajax_volunteer_form_export_csv', [$this, 'exportCsv']);
     }
 
     public function index()
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'db7_forms';
-        $form_post_id = 894;
 
         // フィルター条件の取得
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
@@ -30,7 +31,7 @@ class LearnerFormController
 
         // 基本のクエリ
         $query = "SELECT * FROM {$table_name} WHERE form_post_id = %d";
-        $params = [$form_post_id];
+        $params = [$this->form_post_id];
 
         // フィルター条件の追加
         if ($date_from) {
@@ -64,8 +65,6 @@ class LearnerFormController
         // クエリの実行
         $forms = $wpdb->get_results($wpdb->prepare($query, $params));
 
-
-
         // データの整形
         $applications = [];
         foreach ($forms as $form) {
@@ -95,7 +94,7 @@ class LearnerFormController
             $applications[] = $itemData;
         }
 
-        view('admin.learner-forms.index2', compact('applications'));
+        view('admin.volunteer-forms.index', compact('applications'));
     }
 
     public function update()
@@ -104,14 +103,14 @@ class LearnerFormController
             wp_die('Unauthorized');
         }
 
-        check_admin_referer('learner_form_update');
+        check_admin_referer('volunteer_form_update');
 
         $id = $_POST['id'] ?? 0;
         $status = sanitize_text_field($_POST['status'] ?? '');
 
         $result = $this->updateStatus($id, $status);
 
-        wp_redirect(admin_url('admin.php?page=learner-form&message=updated'));
+        wp_redirect(admin_url('admin.php?page=' . $this->page_slug . '&message=updated'));
         exit;
     }
 
@@ -121,7 +120,7 @@ class LearnerFormController
             wp_send_json_error(['message' => 'Unauthorized']);
         }
 
-        check_ajax_referer('learner_form_update', 'nonce');
+        check_ajax_referer('volunteer_form_update', 'nonce');
 
         $id = $_POST['id'] ?? 0;
         $status = sanitize_text_field($_POST['status'] ?? '');
@@ -135,107 +134,15 @@ class LearnerFormController
         }
     }
 
-    private function updateStatus($id, $status)
-    {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'db7_forms';
-
-        $form = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table_name} WHERE form_id = %d",
-            $id
-        ));
-
-        if ($form && in_array($status, ['1', '2'])) {
-            $form_data = unserialize($form->form_value);
-            // if (isset($form_data['status'])) {
-            //   // 状态已经被更新，不可再次更新
-            //   return false;
-            // }
-
-            $form_data['status'] = $status;
-
-            $result = $wpdb->update(
-                $table_name,
-                ['form_value' => serialize($form_data)],
-                ['form_id' => $id],
-                ['%s'],
-                ['%d']
-            );
-
-            if ($result !== false) {
-                $email = $form_data['your-email'] ?? '';
-                $name = $form_data['your-name'] ?? '';
-
-                if ($email && $name) {
-                    if ($status === '1') {
-                        $this->emailService->sendApprovalEmail($email, $name);
-                    } elseif ($status === '2') {
-                        $this->emailService->sendRejectionEmail($email, $name);
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-
-        return false;
-    }
-
-    public function exportCsv()
-    {
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-
-        check_admin_referer('learner_form_export_csv');
-
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'db7_forms';
-        $form_post_id = 894;
-
-        $query = "SELECT * FROM {$table_name} WHERE form_post_id = %d ORDER BY form_date DESC";
-        $forms = $wpdb->get_results($wpdb->prepare($query, $form_post_id));
-
-        // 清除所有输出缓冲区
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // 设置HTTP头部
-        header('Content-Type: text/csv');
-        header('Content-Transfer-Encoding: binary');
-        header('Content-Disposition: attachment; filename="learner_forms.csv"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['ID', '申請日', '名前', 'メール', 'ステータス']);
-        foreach ($forms as $form) {
-            $form_data = unserialize($form->form_value);
-            $status = $form_data['status'] ?? '未審査';
-            if ($status === '1') $status = '審査通過';
-            elseif ($status === '2') $status = '審査不通過';
-            fputcsv($output, [
-                $form->form_id,
-                $form->form_date,
-                $form_data['your-name'] ?? '',
-                $form_data['your-email'] ?? '',
-                $status
-            ]);
-        }
-        fclose($output);
-        exit;
-    }
-
-    public function getLearnerFormDetails()
+    public function getFormDetails()
     {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
         }
 
-        check_ajax_referer('get_learner_form_details', 'nonce');
+        check_ajax_referer('get_volunteer_form_details', 'nonce');
 
-        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
         if (!$id) {
             wp_send_json_error(['message' => 'Invalid ID']);
         }
@@ -289,5 +196,64 @@ class LearnerFormController
         $html .= '</table>';
 
         wp_send_json_success(['html' => $html]);
+    }
+
+    public function exportCsv()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        check_admin_referer('volunteer_form_export_csv');
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'db7_forms';
+
+        $query = "SELECT * FROM {$table_name} WHERE form_post_id = %d ORDER BY form_date DESC";
+        $forms = $wpdb->get_results($wpdb->prepare($query, $this->form_post_id));
+
+        // 清除所有输出缓冲区
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // 设置响应头
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=volunteer_forms.csv');
+
+        // 创建输出流
+        $output = fopen('php://output', 'w');
+
+        // 添加 BOM 以支持 Excel 中的中文
+        fputs($output, "\xEF\xBB\xBF");
+
+        // 写入 CSV 头部
+        fputcsv($output, [
+            '申請日時',
+            '氏名',
+            'メールアドレス',
+            'ステータス'
+        ]);
+
+        // 写入数据
+        foreach ($forms as $form) {
+            $form_data = unserialize($form->form_value);
+            $status = $form_data['status'] ?? '未審査';
+            if ($status == '1') {
+                $status = '審査通過';
+            } elseif ($status == '2') {
+                $status = '審査不通過';
+            }
+
+            fputcsv($output, [
+                $form->form_date,
+                $form_data['your-name'] ?? '',
+                $form_data['your-email'] ?? '',
+                $status
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 }
