@@ -25,8 +25,7 @@ require_once LINK_GALLERY_PLUGIN_DIR . 'vendor/autoload.php';
 
 // 初始化插件
 function link_gallery_init() {
-    // friend link 后台的菜单和页面显示
-    // new \LinkGallery\Controllers\Admin\LinkController();
+    // 自己定制的后台管理项，包含：friend link，学习者申请，志愿者申请管理。
     new \LinkGallery\Controllers\Admin\CustomFormsController();
     // friend link 的 gutenberg 编辑器组件
     new \LinkGallery\Controllers\Frontend\LinkWidgetController();
