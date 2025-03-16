@@ -7,11 +7,13 @@ class CustomFormsController
     private $learnerFormController;
     private $volunteerFormController;
     private $linkController;
+    private $qaFormController;
 
     public function __construct()
     {
         $this->learnerFormController = new LearnerFormController();
         $this->volunteerFormController = new VolunteerFormController();
+        $this->qaFormController = new QaFormController();
         $this->linkController = new LinkController();
         add_action('admin_menu', [$this, 'addMenuPage']);
     }
@@ -26,6 +28,10 @@ class CustomFormsController
 
     public function getLinkController() {
         return $this->linkController;
+    }
+
+    public function getQaFormController() {
+        return $this->qaFormController;
     }
 
     public function addMenuPage()
@@ -70,6 +76,16 @@ class CustomFormsController
             'volunteer-form',
             [$this->volunteerFormController, 'index'],
             21
+        );
+        // “問い合わせ管理”子菜单
+        add_submenu_page(
+            'custom-forms',
+            '問い合わせ管理',
+            '問い合わせダータ',
+            'manage_options',
+            'ask-question-form',
+            [$this->qaFormController, 'index'],
+            22
         );
     }
 

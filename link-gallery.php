@@ -29,6 +29,8 @@ function link_gallery_init() {
     new \LinkGallery\Controllers\Admin\CustomFormsController();
     // friend link 的 gutenberg 编辑器组件
     new \LinkGallery\Controllers\Frontend\LinkWidgetController();
+    // 注册 contact form 7 的钩子接口
+    new \LinkGallery\Services\ContactFormService();
 
     // 注册和加载脚本
     add_action('admin_enqueue_scripts', 'link_gallery_admin_scripts');
