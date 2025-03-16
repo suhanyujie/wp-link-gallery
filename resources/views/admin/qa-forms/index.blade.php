@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 $page = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
 $per_page = $paginationInfo['numPerPage'] ?? 20;
 $offset = ($page - 1) * $per_page;
-$total_items = count($applications);
+$total_items = $paginationInfo['total'] ?? 0;
 $total_pages = ceil($total_items / $per_page);
 $current_items = array_slice($applications, $offset, $per_page);
 
@@ -25,9 +25,9 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
             <div class="alignleft actions">
                 <select name="status">
                     <option value="">全てのステータス</option>
-                    <option value="未審査" <?php selected($status_filter, '未審査'); ?>>未審査</option>
-                    <option value="審査通過" <?php selected($status_filter, '審査通過'); ?>>審査通過</option>
-                    <option value="審査不通過" <?php selected($status_filter, '審査不通過'); ?>>審査不通過</option>
+                    <option value="0" <?php selected($status_filter, '0'); ?>>未審査</option>
+                    <option value="1" <?php selected($status_filter, '1'); ?>>審査通過</option>
+                    <option value="2" <?php selected($status_filter, '2'); ?>>審査不通過</option>
                 </select>
                 <input type="search" name="search" value="<?php echo esc_attr(isset($_GET['search']) ? $_GET['search'] : ''); ?>" placeholder="名前またはメールで検索">
                 <input type="submit" class="button" value="フィルター">
@@ -69,7 +69,7 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
                 <td><?php echo esc_html($item['email']); ?></td>
                 <td class="status-column">
                     <span class="status-<?php echo sanitize_html_class(strtolower($item['status'])); ?>">
-                        <?php echo esc_html($item['status']); ?>
+                        <?php echo esc_html($item['status_desc']); ?>
                     </span>
                 </td>
                 <td>
@@ -121,7 +121,7 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
         <div>
           <div id="details-content"></div>
           <hr/>
-          <div id="reply-box">
+          <div id="reply-box" data-id="">
             <h3>返信</h3>
             <textarea id="reply-content" class="widefat" rows="5" placeholder="返信内容を入力してください..."></textarea>
             <p class="submit">
@@ -169,9 +169,9 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
     text-decoration: none;
     cursor: pointer;
 }
-.status-column .status-未審査 { color: #646970; }
-.status-column .status-審査通過 { color: #00a32a; }
-.status-column .status-審査不通過 { color: #d63638; }
+.status-column .status-0 { color: #646970; }
+.status-column .status-1 { color: #00a32a; }
+.status-column .status-2 { color: #d63638; }
 </style>
 
 <script>
@@ -243,6 +243,7 @@ jQuery(document).ready(function($) {
     // 詳細を見るボタンのクリックイベント
     $('.view-details').on('click', function() {
         const id = $(this).data('id');
+        $('#reply-box').attr('data-id', id);
         // Ajax リクエスト
         $.ajax({
             url: ajaxurl,
@@ -266,36 +267,6 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // ステータス更新ボタンのクリックイベント
-    $('.update-status').on('click', function() {
-        const id = $(this).data('id');
-        const status = $(this).data('status');
-        if (!confirm('ステータスを更新してもよろしいですか？')) {
-            return;
-        }
-
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'update_qa_form_status',
-                id: id,
-                status: status,
-                nonce: '<?php echo wp_create_nonce("update_qa_form_status"); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload();
-                } else {
-                    alert('ステータスの更新に失敗しました');
-                }
-            },
-            error: function() {
-                alert('サーバーとの通信に失敗しました');
-            }
-        });
-    });
-
     // モーダルを閉じる
     $('.close').click(function() {
         $('#details-modal').hide();
@@ -308,31 +279,40 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // ステータス更新
-    $('.update-status').click(function() {
-        if (!confirm('ステータスを更新してもよろしいですか？')) {
+    // 回复提交
+    $('#submit-reply').click(function() {
+        const replyContent = $('#reply-content').val().trim();
+        if (!replyContent) {
+            alert('返信内容を入力してください');
             return;
         }
 
-        var button = $(this);
-        var id = button.data('id');
-        var status = button.data('status');
+        const currentId = $('#reply-box').attr('data-id');
+        if (!currentId) {
+            alert('フォームIDを取得できません');
+            return;
+        }
 
         $.ajax({
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'qa_form_update',
-                id: id,
-                status: status,
-                nonce: '<?php echo wp_create_nonce("qa_form_update"); ?>'
+                action: 'qa_form_sendMessage',
+                id: currentId,
+                message: replyContent,
+                nonce: '<?php echo wp_create_nonce("qa_form_sendMessage"); ?>'
             },
             success: function(response) {
                 if (response.success) {
-                    location.reload();
+                    alert('返信が送信されました');
+                    $('#reply-content').val('');
+                    $('#details-modal').hide();
                 } else {
-                    alert(response.data.message);
+                    alert(response.data.message || '送信に失敗しました');
                 }
+            },
+            error: function() {
+                alert('サーバーとの通信に失敗しました');
             }
         });
     });

@@ -4,16 +4,20 @@
  */
 namespace LinkGallery\Controllers\Admin;
 
+use LinkGallery\Services\Admin\QaFormService;
+
 class QaFormController
 {
     protected $form_post_id = 246;
-    protected $page_slug = 'qa-form';
+    protected $page_slug = 'ask-question-form';
     protected $page_title = '問い合わせ管理';
     protected $table_name = 'lg_contact_forms';
 
     public function __construct()
     {
         add_action('admin_post_qa_form_update', [$this, 'update']);
+        add_action('admin_post_qa_form_sendMessage', [$this, 'sendReply']);
+        add_action('wp_ajax_qa_form_sendMessage', [$this, 'sendReply']);
         add_action('wp_ajax_qa_form_update', [$this, 'ajaxUpdate']);
         add_action('wp_ajax_get_qa_form_details', [$this, 'getFormDetails']);
         add_action('admin_post_qa_form_export_csv', [$this, 'exportCsv']);
@@ -31,7 +35,7 @@ class QaFormController
         ];
 
         // フィルター条件の取得
-        $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+        $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '0';
         $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : '';
         $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
         $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
@@ -52,6 +56,10 @@ class QaFormController
         if ($search) {
             $query .= " AND form_value LIKE %s";
             $params[] = '%' . $wpdb->esc_like($search) . '%';
+        }
+        if ($status_filter) {
+            $query .= " AND status = %s";
+            $params[] = (string)($status_filter);
         }
         $query .= " ORDER BY id DESC";
 
@@ -83,16 +91,16 @@ class QaFormController
                 'date' => $form->created_at,
                 'name' => $form_data['your-name'] ?? '',
                 'email' => $form_data['your-email'] ?? '',
-                'status' => $form_data['status'] ?? '未審査',
+                'status' => $form->status ?? '0',
                 'details' => $form_data
             ];
-            $itemData['status_code'] = $itemData['status'];
+            $itemData['status_desc'] = $itemData['status'];
             if ($itemData['status'] == '1') {
-                $itemData['status'] = '審査通過';
+                $itemData['status_desc'] = '審査通過';
             } elseif ($itemData['status'] == '2') {
-                $itemData['status'] = '審査不通過';
+                $itemData['status_desc'] = '審査不通過';
             } else {
-                $itemData['status'] = '未審査';
+                $itemData['status_desc'] = '未審査';
             }
 
             // ステータスフィルター
@@ -120,6 +128,32 @@ class QaFormController
         $result = $this->updateStatus($id, $status);
 
         wp_redirect(admin_url('admin.php?page=' . $this->page_slug . '&message=updated'));
+        exit;
+    }
+
+    // for ajax
+    public function sendReply()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        check_ajax_referer('qa_form_sendMessage', 'nonce');
+
+        $id = $_POST['id'] ?? 0;
+        $message = sanitize_text_field($_POST['message'] ?? '');
+        $svc = new QaFormService();
+        $res = $svc->replyToUserAndSendEmail($id, $message);
+
+        wp_send_json_success([
+            'code' => 0,
+            'message' => '返信が送信されました',
+            'data' => [
+                'res' => $res,
+            ],
+        ]);
+
+        // wp_redirect(admin_url('admin.php?page=' . $this->page_slug . '&status=0'));
         exit;
     }
 
