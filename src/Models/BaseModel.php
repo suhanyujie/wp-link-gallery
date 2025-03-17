@@ -1,80 +1,141 @@
 <?php
 /**
  *
- * ref: https://stackoverflow.com/questions/5144893/getting-wordpress-database-name-username-password-with-php
+ * ref: Eloquent ORM api
  *
  */
 namespace LinkGallery\Models;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
-
 class BaseModel
 {
-    public $_oDb;
+    protected $dbConn;
+    protected $table;
+    protected $select = '*';
+    protected $where = [];
+    protected $orderBy = [];
+    protected $limit = null;
+    protected $offset = null;
 
-    public function __construct($oDb)
+    public function __construct($dbConn)
     {
-        $this->_oDb = $oDb;
+        $this->dbConn = $dbConn;
     }
 
-    public function __get($sField)
+    public function table($table)
     {
-        if($sField != '_oDb')
-            return $this->_oDb->$sField;
+        $this->table = $this->dbConn->prefix . $table;
+        return $this;
     }
 
-    public function __set($sField, $mValue)
+    public function select($columns)
     {
-        if($sField != '_oDb')
-            $this->_oDb->$sField = $mValue;
+        $this->select = is_array($columns) ? implode(', ', $columns) : $columns;
+        return $this;
     }
 
-    public function __call($sMethod, array $aArgs)
+    public function where($column, $operator = null, $value = null)
     {
-        return call_user_func_array(array($this->_oDb, $sMethod), $aArgs);
-    }
-
-    public function getDbName() { return $this->_oDb->dbname;     }
-    public function getDbUser() { return $this->_oDb->dbuser; }
-    public function getDbPass() { return $this->_oDb->dbpassword; }
-    public function getDbHost() { return $this->_oDb->dbhost;     }
-
-    public function initEloquentOrm()
-    {
-        global $wpdb;
-
-        try {
-            $capsule = new Capsule();
-
-            $options = [
-                'driver' => 'mysql',
-                'host' => $this->getDbHost(),
-                'port' => $this->_oDb->dbport,
-                'database' => $this->getDbName(),
-                'username' => $this->getDbUser(),
-                'password' => $this->getDbPass(),
-                'charset' => $wpdb->charset,
-                'collation' => $wpdb->collate,
-                'prefix' => $wpdb->prefix,
-                'options' => [
-                    \PDO::ATTR_TIMEOUT => 5,
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::ATTR_PERSISTENT => false,
-                    \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
-                ],
-                'other' => [
-                    'server'=>$this->_oDb->dbhost ,
-                    'server-host'=> DB_HOST ,
-                ],
-            ];
-            error_log(print_r($options, true));
-            $capsule->addConnection($options);
-
-            $capsule->setAsGlobal();
-            $capsule->bootEloquent();
-        } catch (\Exception $e) {
-            error_log('Database connection error: ' . $e->getMessage());
-            throw new \Exception('数据库连接失败，请检查配置信息或联系管理员。');
+        if (is_array($column)) {
+            foreach ($column as $key => $val) {
+                $this->where[] = [$key, '=', $val];
+            }
+        } else {
+            if ($value === null) {
+                $value = $operator;
+                $operator = '=';
+            }
+            $this->where[] = [$column, $operator, $value];
         }
+        return $this;
+    }
+
+    public function orderBy($column, $direction = 'ASC')
+    {
+        $this->orderBy[] = [$column, strtoupper($direction)];
+        return $this;
+    }
+
+    public function limit($limit)
+    {
+        $this->limit = (int) $limit;
+        return $this;
+    }
+
+    public function offset($offset)
+    {
+        $this->offset = (int) $offset;
+        return $this;
+    }
+
+    public function get()
+    {
+        $query = "SELECT {$this->select} FROM {$this->table}";
+
+        if (!empty($this->where)) {
+            $whereClauses = [];
+            foreach ($this->where as $condition) {
+                list($column, $operator, $value) = $condition;
+                $whereClauses[] = $this->dbConn->prepare("%s %s %s", $column, $operator, $value);
+            }
+            $query .= " WHERE " . implode(' AND ', $whereClauses);
+        }
+
+        if (!empty($this->orderBy)) {
+            $orderClauses = [];
+            foreach ($this->orderBy as $order) {
+                list($column, $direction) = $order;
+                $orderClauses[] = "{$column} {$direction}";
+            }
+            $query .= " ORDER BY " . implode(', ', $orderClauses);
+        }
+
+        if ($this->limit !== null) {
+            $query .= " LIMIT {$this->limit}";
+            if ($this->offset !== null) {
+                $query .= " OFFSET {$this->offset}";
+            }
+        }
+
+        return $this->dbConn->get_results($query);
+    }
+
+    public function first()
+    {
+        $this->limit(1);
+        $results = $this->get();
+        return !empty($results) ? $results[0] : null;
+    }
+
+    public function create($data)
+    {
+        return $this->dbConn->insert($this->table, $data);
+    }
+
+    public function update($data)
+    {
+        if (empty($this->where)) {
+            return false;
+        }
+        return $this->dbConn->update($this->table, $data, $this->buildWhereConditions());
+    }
+
+    public function delete()
+    {
+        if (empty($this->where)) {
+            return false;
+        }
+        return $this->dbConn->delete($this->table, $this->buildWhereConditions());
+    }
+
+    protected function buildWhereConditions()
+    {
+        $conditions = [];
+        foreach ($this->where as $condition) {
+            list($column, $operator, $value) = $condition;
+            if ($operator === '=') {
+                $conditions[$column] = $value;
+            }
+        }
+        return $conditions;
     }
 }
