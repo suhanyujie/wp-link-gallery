@@ -2,6 +2,7 @@
 /**
  * 問い合わせのフォーム管理
  */
+
 namespace LinkGallery\Controllers\Admin;
 
 use LinkGallery\Services\Admin\QaFormService;
@@ -57,7 +58,11 @@ class QaFormController
             $query .= " AND form_value LIKE %s";
             $params[] = '%' . $wpdb->esc_like($search) . '%';
         }
-        if ($status_filter) {
+        error_log(print_r(['log' => [
+            '$status_filter' => $status_filter,
+            '1' => var_export($status_filter, true),
+        ]], true));
+        if ($status_filter !== '-1') {
             $query .= " AND status = %s";
             $params[] = (string)($status_filter);
         }
@@ -103,11 +108,6 @@ class QaFormController
                 $itemData['status_desc'] = '未審査';
             }
 
-            // ステータスフィルター
-            if ($status_filter && $status_filter !== $itemData['status']) {
-                continue;
-            }
-
             $applications[] = $itemData;
         }
 
@@ -139,42 +139,28 @@ class QaFormController
         }
 
         check_ajax_referer('qa_form_sendMessage', 'nonce');
-
+        // 记录日志
+//        error_log(print_r(['log' => []], true));
         $id = $_POST['id'] ?? 0;
         $message = sanitize_text_field($_POST['message'] ?? '');
+        $isReject = sanitize_text_field($_POST['isReject'] ?? 0);
         $svc = new QaFormService();
-        $res = $svc->replyToUserAndSendEmail($id, $message);
+        if ($isReject) {
+            $res = $svc->replyForReject($id, $message);
+        } else {
+            $res = $svc->replyToUserAndSendEmail($id, $message);
+        }
 
         wp_send_json_success([
-            'code' => 0,
             'message' => '返信が送信されました',
             'data' => [
+                'isReject' => $isReject,
                 'res' => $res,
             ],
         ]);
 
         // wp_redirect(admin_url('admin.php?page=' . $this->page_slug . '&status=0'));
         exit;
-    }
-
-    public function ajaxUpdate()
-    {
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Unauthorized']);
-        }
-
-        check_ajax_referer('qa_form_update', 'nonce');
-
-        $id = $_POST['id'] ?? 0;
-        $status = sanitize_text_field($_POST['status'] ?? '');
-
-        $result = $this->updateStatus($id, $status);
-
-        if ($result) {
-            wp_send_json_success(['message' => '更新成功']);
-        } else {
-            wp_send_json_error(['message' => '更新失败']);
-        }
     }
 
     public function getFormDetails()
@@ -185,7 +171,7 @@ class QaFormController
 
         check_ajax_referer('get_qa_form_details', 'nonce');
 
-         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
         if (!$id) {
             wp_send_json_error(['message' => 'Invalid ID']);
         }

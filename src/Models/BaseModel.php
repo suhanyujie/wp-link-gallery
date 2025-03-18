@@ -4,6 +4,7 @@
  * ref: Eloquent ORM api
  *
  */
+
 namespace LinkGallery\Models;
 
 class BaseModel
@@ -57,13 +58,13 @@ class BaseModel
 
     public function limit($limit)
     {
-        $this->limit = (int) $limit;
+        $this->limit = (int)$limit;
         return $this;
     }
 
     public function offset($offset)
     {
-        $this->offset = (int) $offset;
+        $this->offset = (int)$offset;
         return $this;
     }
 
@@ -75,7 +76,8 @@ class BaseModel
             $whereClauses = [];
             foreach ($this->where as $condition) {
                 list($column, $operator, $value) = $condition;
-                $whereClauses[] = $this->dbConn->prepare("%s %s %s", $column, $operator, $value);
+//                $whereClauses[] = $this->dbConn->prepare("%s %s %s", $column, $operator, $value);
+                $whereClauses[] = $this->dbConn->prepare("{$column} {$operator} %s", $value);
             }
             $query .= " WHERE " . implode(' AND ', $whereClauses);
         }
@@ -95,6 +97,7 @@ class BaseModel
                 $query .= " OFFSET {$this->offset}";
             }
         }
+//        error_log('sql: ' . $query);
 
         return $this->dbConn->get_results($query);
     }

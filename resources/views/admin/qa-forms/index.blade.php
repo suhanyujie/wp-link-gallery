@@ -24,12 +24,12 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
             <input type="hidden" name="page" value="ask-question-form">
             <div class="alignleft actions">
                 <select name="status">
-                    <option value="">全てのステータス</option>
+                    <option value="-1">全てのステータス</option>
                     <option value="0" <?php selected($status_filter, '0'); ?>>未審査</option>
                     <option value="1" <?php selected($status_filter, '1'); ?>>審査通過</option>
                     <option value="2" <?php selected($status_filter, '2'); ?>>審査不通過</option>
                 </select>
-                <input type="search" name="search" value="<?php echo esc_attr(isset($_GET['search']) ? $_GET['search'] : ''); ?>" placeholder="名前またはメールで検索">
+                <!-- <input type="search" name="search" value="<?php echo esc_attr(isset($_GET['search']) ? $_GET['search'] : ''); ?>" placeholder="名前またはメールで検索"> -->
                 <input type="submit" class="button" value="フィルター">
             </div>
         </form>
@@ -126,6 +126,7 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
             <textarea id="reply-content" class="widefat" rows="5" placeholder="返信内容を入力してください..."></textarea>
             <p class="submit">
               <button type="button" id="submit-reply" class="button button-primary">返信を送信</button>
+              <button type="button" id="submit-reject" class="button button-danger">拒否</button>
             </p>
           </div>
         </div>
@@ -172,6 +173,7 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
 .status-column .status-0 { color: #646970; }
 .status-column .status-1 { color: #00a32a; }
 .status-column .status-2 { color: #d63638; }
+#submit-reject{margin-left: 200px; border-color: #d63638;}
 </style>
 
 <script>
@@ -280,7 +282,7 @@ jQuery(document).ready(function($) {
     });
 
     // 回复提交
-    $('#submit-reply').click(function() {
+    $('#submit-reply,#submit-reject').click(function() {
         const replyContent = $('#reply-content').val().trim();
         if (!replyContent) {
             alert('返信内容を入力してください');
@@ -292,6 +294,12 @@ jQuery(document).ready(function($) {
             alert('フォームIDを取得できません');
             return;
         }
+        let _this = $(this);
+        let isReject = 0;
+        console.log('attr-id: ', _this.attr('id'));
+        if (_this.attr('id') === 'submit-reject') {
+            isReject = 1;
+        }
 
         $.ajax({
             url: ajaxurl,
@@ -300,6 +308,7 @@ jQuery(document).ready(function($) {
                 action: 'qa_form_sendMessage',
                 id: currentId,
                 message: replyContent,
+                isReject: isReject,
                 nonce: '<?php echo wp_create_nonce("qa_form_sendMessage"); ?>'
             },
             success: function(response) {
@@ -307,6 +316,8 @@ jQuery(document).ready(function($) {
                     alert('返信が送信されました');
                     $('#reply-content').val('');
                     $('#details-modal').hide();
+                    // 刷新页面
+                    location.reload();
                 } else {
                     alert(response.data.message || '送信に失敗しました');
                 }
