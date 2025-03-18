@@ -21,6 +21,13 @@ class BaseFormModel extends BaseModel
         $this->dbObj = $this->table($this->tableName);
     }
 
+    public function getRowById($id)
+    {
+        $query = $this->table($this->tableName);
+        $dataObj = $query->where('id', $id)->first();
+        return $dataObj;
+    }
+
     public function setReply($id, string $replyContent)
     {
         $res = 0;

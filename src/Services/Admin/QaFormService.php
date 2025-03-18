@@ -15,6 +15,12 @@ class QaFormService
 
     public function replyToUserAndSendEmail($id, $reply)
     {
+        $dataObj = $this->model->getRowById($id);
+        $cObj = json_decode($dataObj->content, 256);
+        if (isset($cObj['your-email']) && isset($cObj['your-name'])) {
+            $emailSvc = new QaFormEmailService();
+            $emailSvc->sendApprovalEmail($cObj['your-email'], $cObj['your-name'], $reply);
+        }
         return $this->model->setReply($id, $reply);
     }
 
