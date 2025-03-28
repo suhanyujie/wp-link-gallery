@@ -162,6 +162,30 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
 .status-column .status-1 { color: #00a32a; }
 .status-column .status-2 { color: #d63638; }
 #submit-reject{margin-left: 200px; border-color: #d63638;}
+.modal-content h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    margin: 15px 0;
+}
+
+#details-content table th,
+#details-content table td {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+#reply-content {
+    font-size: 16px;
+}
+
+.modal-content .button {
+    font-size: 16px;
+    padding: 8px 16px;
+}
 </style>
 
 <script>
