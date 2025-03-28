@@ -58,6 +58,7 @@ class QaFormController
             $query .= " AND form_value LIKE %s";
             $params[] = '%' . $wpdb->esc_like($search) . '%';
         }
+        
         error_log(print_r(['log' => [
             '$status_filter' => $status_filter,
             '1' => var_export($status_filter, true),

@@ -8,9 +8,9 @@
     </div>
 
     <div class="card" style="margin-top: 20px;">
-        <h2>学習者申請管理</h2>
-        <p>学習者からの申請を確認し、承認・否認を管理します。</p>
-        <a href="<?php echo admin_url('admin.php?page=learner-form'); ?>" class="button button-primary">学習者申請管理へ</a>
+        <h2>問い合わせダータ管理</h2>
+        <p>ユーザーの問い合わせの管理。</p>
+        <a href="<?php echo admin_url('admin.php?page=ask-question-form'); ?>" class="button button-primary">問い合わせダータ管理へ</a>
     </div>
 </div>
 

@@ -24,10 +24,10 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
             <input type="hidden" name="page" value="ask-question-form">
             <div class="alignleft actions">
                 <select name="status">
-                    <option value="-1">全てのステータス</option>
                     <option value="0" <?php selected($status_filter, '0'); ?>>未審査</option>
                     <option value="1" <?php selected($status_filter, '1'); ?>>審査通過</option>
                     <option value="2" <?php selected($status_filter, '2'); ?>>審査不通過</option>
+                    <option value="-1">全てのステータス</option>
                 </select>
                 <!-- <input type="search" name="search" value="<?php echo esc_attr(isset($_GET['search']) ? $_GET['search'] : ''); ?>" placeholder="名前またはメールで検索"> -->
                 <input type="submit" class="button" value="フィルター">
@@ -56,7 +56,6 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
                 <th scope="col">メール</th>
                 <th scope="col">ステータス</th>
                 <th scope="col">詳細</th>
-                <th scope="col">操作</th>
             </tr>
         </thead>
         <tbody>
@@ -74,17 +73,6 @@ $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
                 </td>
                 <td>
                     <button class="button-link view-details" data-id="<?php echo esc_attr($item['id']); ?>">詳細を見る</button>
-                </td>
-                <td>
-                    <div class="row-actions">
-                        <?php if ($item['status'] === '未審査'): ?>
-                            <button class="button-link update-status" data-id="<?php echo esc_attr($item['id']); ?>" data-status="1">承認</button>
-                            |
-                            <button class="button-link update-status" data-id="<?php echo esc_attr($item['id']); ?>" data-status="2">却下</button>
-                        <?php else: ?>
-                            ——
-                        <?php endif; ?>
-                    </div>
                 </td>
             </tr>
                 <?php endforeach; ?>
