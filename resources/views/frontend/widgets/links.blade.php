@@ -25,7 +25,7 @@
 }
 
 .link-gallery-item {
-    margin-bottom: 10px;
+    margin-bottom: 2px;
 }
 
 .link-gallery-item a {
