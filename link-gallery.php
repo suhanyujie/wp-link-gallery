@@ -31,6 +31,8 @@ function link_gallery_init() {
     new \LinkGallery\Controllers\Frontend\LinkWidgetController();
     // 注册 contact form 7 的钩子接口
     new \LinkGallery\Services\ContactFormService();
+    // some block
+    new \LinkGallery\Controllers\GutenbergBlock\NormalPdfInsertController();
 
     // 注册和加载脚本
     add_action('admin_enqueue_scripts', 'link_gallery_admin_scripts');
