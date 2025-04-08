@@ -25,6 +25,12 @@ class EventFormDataManageController
         $forms = WPCF7_ContactForm::find();
         $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
 
+        // 如果没有指定form_id，使用最新创建的表单ID
+        if (!$form_id && !empty($forms)) {
+            // Contact Form 7的表单按照ID降序排列，第一个就是最新的
+            $latest_form = reset($forms);
+            $form_id = $latest_form->id();
+        }
         global $wpdb;
         $table_name = $wpdb->prefix . $this->table_name;
         $paginationInfo = [
