@@ -2,6 +2,10 @@
 
 - wordpress plugin for manage friend links
 - contact-form-cfdb7 对应的数据展示，并审核数据是否通过。
+### 功能
+- 友情链接，前后台的展示和管理 ok
+- “咨询”页面的表格数据收集 ok
+- gutenberg 编辑器的 pdf 文件展示组件 deprecated
 
 ## Notice
 
