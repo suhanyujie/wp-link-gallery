@@ -21,11 +21,7 @@ class ContactFormService
 
                 global $wpdb;
                 $table_name = $wpdb->prefix . 'lg_contact_forms';
-                $content = [
-                    'your-name' => $posted_data['your-name'] ?? '',
-                    'your-email' => $posted_data['your-email'] ?? '',
-                    'your-message' => $posted_data['your-message'] ?? '',
-                ];
+                $content = $posted_data;
                 $data = [
                     'form_id' => $contact_form->id(),
                     'content' => json_encode($content),

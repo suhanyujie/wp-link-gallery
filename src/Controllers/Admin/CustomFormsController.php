@@ -8,6 +8,7 @@ class CustomFormsController
     private $volunteerFormController;
     private $linkController;
     private $qaFormController;
+    private $FormDataManageController;
 
     public function __construct()
     {
@@ -15,6 +16,7 @@ class CustomFormsController
         $this->volunteerFormController = new VolunteerFormController();
         $this->qaFormController = new QaFormController();
         $this->linkController = new LinkController();
+        $this->FormDataManageController = new EventFormDataManageController();
         add_action('admin_menu', [$this, 'addMenuPage']);
     }
 
@@ -86,6 +88,15 @@ class CustomFormsController
             'ask-question-form',
             [$this->qaFormController, 'index'],
             22
+        );
+        add_submenu_page(
+            'custom-forms',
+            'イベント申込ダータ管理',
+            'イベント申込ダータ管理',
+            'manage_options',
+            'event-form-data-manage',
+            [$this->FormDataManageController, 'index'],
+            23
         );
     }
 
