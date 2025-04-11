@@ -218,9 +218,13 @@ const DetailsModal = {
 
     setContent: function(data) {
         let dataObj = data['form_data'] ?? {};
+        console.log('dataObj: ', dataObj);
         let html = '<table class="wp-list-table widefat fixed striped">';
         let keyDesc = '';
         for (var key in dataObj) {
+            if (!DetailsModal.allowFields.includes(key)) {
+                continue;
+            }
             keyDesc = DetailsModal.getKeyDesc(key);
 
             html += '<tr>';
@@ -231,6 +235,9 @@ const DetailsModal = {
         html += '</table>';
         // this.contentContainer.innerHTML = html;
         jQuery('#details-content').html(html)
+        if (dataObj['reply']) {
+            jQuery('#reply-content').val(dataObj['reply']);
+        }
         this.show();
     },
     getKeyDesc: function(key) {
@@ -247,7 +254,8 @@ const DetailsModal = {
                 break;
         }
         return desc;
-    }
+    },
+    allowFields: ['your-name','your-email','your-message'],
 };
 
 jQuery(document).ready(function($) {
@@ -295,6 +303,11 @@ jQuery(document).ready(function($) {
 
     // 回复提交
     $('#submit-reply,#submit-reject').click(function() {
+        let _this = $(this);
+        if (_this.prop('disabled')) {
+            return;
+        }
+        $('#submit-reply,#submit-reject').prop('disabled', true);
         const replyContent = $('#reply-content').val().trim();
         if (!replyContent) {
             alert('返信内容を入力してください');
@@ -306,7 +319,6 @@ jQuery(document).ready(function($) {
             alert('フォームIDを取得できません');
             return;
         }
-        let _this = $(this);
         let isReject = 0;
         console.log('attr-id: ', _this.attr('id'));
         if (_this.attr('id') === 'submit-reject') {
@@ -336,6 +348,9 @@ jQuery(document).ready(function($) {
             },
             error: function() {
                 alert('サーバーとの通信に失敗しました');
+            },
+            complete: function() {
+                $('#submit-reply,#submit-reject').prop('disabled', false);
             }
         });
     });
