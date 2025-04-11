@@ -22,6 +22,7 @@ class EventFormDataManageController
         add_action('wp_ajax_event_form_export_csv', [$this, 'exportCsv']);
         add_action('wp_ajax_get_event_form_fields', [$this, 'getFormFields']);
         add_action('wp_ajax_event_form_create', [$this, 'ajaxCreate']);
+        add_action('wp_ajax_event_form_delete_bulk', [$this, 'ajaxBatchDelete']);
     }
 
     public function index()
@@ -257,6 +258,41 @@ class EventFormDataManageController
             wp_send_json_success(['message' => '新規作成が完了しました']);
         } else {
             wp_send_json_error(['message' => '新規作成に失敗しました']);
+        }
+    }
+
+    public function ajaxBatchDelete()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+
+        check_ajax_referer('event_form_delete_bulk', 'nonce');
+
+        $ids = isset($_POST['ids']) ? array_map('intval', (array)$_POST['ids']) : [];
+        if (empty($ids)) {
+            wp_send_json_error(['message' => '削除する項目を選択してください']);
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . $this->table_name;
+
+        // 使用IN子句进行批量删除
+        $placeholders = array_fill(0, count($ids), '%d');
+        $query = $wpdb->prepare(
+            "DELETE FROM {$table_name} WHERE id IN (" . implode(',', $placeholders) . ")",
+            $ids
+        );
+
+        $result = $wpdb->query($query);
+
+        if ($result !== false) {
+            wp_send_json_success([
+                'message' => '選択した項目を削除しました',
+                'deleted_count' => $result
+            ]);
+        } else {
+            wp_send_json_error(['message' => '削除に失敗しました']);
         }
     }
 

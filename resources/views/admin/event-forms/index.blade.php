@@ -20,6 +20,7 @@
             <?php if($form_id): ?>
                 <span class="separator" style="display: inline-block; width: 2px; height: 28px; background-color: #ccd0d4; margin: 0 50px; vertical-align: middle;"></span>
                 <button class="button add-entry" data-nonce="<?php echo wp_create_nonce('event_form_create'); ?>" style="margin-left:10px;">新規作成</button>
+                <button class="button delete-selected" data-nonce="<?php echo wp_create_nonce('event_form_delete_bulk'); ?>" style="margin-left:10px; color: #a00;">選択したものを削除</button>
             <?php endif; ?>
         </div>
         <div class="alignright">
@@ -33,6 +34,7 @@
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
+                <th class="check-column"><input type="checkbox" id="cb-select-all"></th>
                 <th>ID</th>
                 <th>提出日時</th>
                 <th>内容</th>
@@ -43,6 +45,7 @@
             <?php if(count($form_entries) > 0): ?>
                 <?php foreach($form_entries as $entry): ?>
                     <tr>
+                        <td><input type="checkbox" name="entry[]" value="<?php echo esc_attr($entry['id']); ?>"></td>
                         <td><?php echo esc_html($entry['id']); ?></td>
                         <td><?php echo esc_html($entry['date']); ?></td>
                         <td>
@@ -70,7 +73,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="4">データがありません</td>
+                    <td colspan="5">データがありません</td>
                 </tr>
             <?php endif; ?>
         </tbody>
@@ -445,5 +448,48 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // 全選/取消全選の処理
+    $('#cb-select-all').change(function() {
+        $('input[name="entry[]"]').prop('checked', $(this).prop('checked'));
+    });
+
+    // 選択した項目を削除
+    $('.delete-selected').click(function() {
+        var selectedIds = $('input[name="entry[]"]:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedIds.length === 0) {
+            alert('削除する項目を選択してください。');
+            return;
+        }
+
+        if (!confirm('選択した' + selectedIds.length + '件のデータを削除してもよろしいですか？')) {
+            return;
+        }
+
+        var nonce = $('.delete-selected').data('nonce');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'event_form_delete_bulk',
+                ids: selectedIds,
+                nonce: nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    location.reload();
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
 });
 </script>
+
+
