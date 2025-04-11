@@ -16,10 +16,10 @@ class QaFormEmailService extends BaseEmailService
     public function sendApprovalEmail($to, $name, $content = '')
     {
         $subject = '問い合わせについて';
-        $message = sprintf(
-            "%s 様\n\n 問い合わせ ご利用ありがとうございます。\n\n %s",
-            $name, $content
-        );
+        $message = render_str('admin.qa-forms.email.approval', [
+            'name' => $name,
+            'content' => $content
+        ]);
 
         return $this->sendEmail($to, $subject, $message);
     }
@@ -34,10 +34,9 @@ class QaFormEmailService extends BaseEmailService
     public function sendRejectionEmail($to, $name)
     {
         $subject = '学習者申請が却下されました';
-        $message = sprintf(
-            "%s 様\n\n申し訳ございませんが、学習者申請が却下されました。\n\nご利用ありがとうございます。",
-            $name
-        );
+        $message = render_str('admin.qa-forms.email.rejection', [
+            'name' => $name
+        ]);
 
         return $this->sendEmail($to, $subject, $message);
     }
