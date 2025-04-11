@@ -1,8 +1,11 @@
 <?php
-
+/**
+ * 各种活动（event）对应的报名表单数据的管理
+ */
 namespace LinkGallery\Controllers\Admin;
 
 use WPCF7_ContactForm;
+use LinkGallery\Services\EventFormDataManageService;
 
 class EventFormDataManageController
 {
@@ -17,6 +20,8 @@ class EventFormDataManageController
         add_action('wp_ajax_get_event_form_details', [$this, 'getFormDetails']);
         add_action('admin_post_event_form_export_csv', [$this, 'exportCsv']);
         add_action('wp_ajax_event_form_export_csv', [$this, 'exportCsv']);
+        add_action('wp_ajax_get_event_form_fields', [$this, 'getFormFields']);
+        add_action('wp_ajax_event_form_create', [$this, 'ajaxCreate']);
     }
 
     public function index()
@@ -33,10 +38,11 @@ class EventFormDataManageController
         }
         global $wpdb;
         $table_name = $wpdb->prefix . $this->table_name;
+        $numPerPage = 20;
         $paginationInfo = [
             'total' => 0,
             'pageNum' => 0,
-            'numPerPage' => 20,
+            'numPerPage' =>$numPerPage,
         ];
 
         // 基本查询
@@ -78,7 +84,11 @@ class EventFormDataManageController
         // 格式化数据
         $form_entries = [];
         foreach ($entries as $entry) {
-            $form_data = json_decode($entry->content, true);
+            $form_data = json_decode($entry->content, true) ?? [];
+            error_log(print_r([
+                'content'=>$entry->content,
+                'arr'=>$form_data,
+            ], true));
             $form_entries[] = [
                 'id' => $entry->id,
                 'date' => $entry->created_at,
@@ -98,15 +108,16 @@ class EventFormDataManageController
 
         check_admin_referer('event_form_update');
 
-        $id = $_POST['id'] ?? 0;
-        $content = $_POST['content'] ?? '';
+       $id = $_POST['id'] ?? 0;
+        $content = $_POST['content'] ?? [];
+        $contentStr = json_encode($content);
 
         global $wpdb;
         $table_name = $wpdb->prefix . $this->table_name;
 
         $result = $wpdb->update(
             $table_name,
-            ['content' => $content],
+            ['content' => $contentStr],
             ['id' => $id],
             ['%s'],
             ['%d']
@@ -125,19 +136,19 @@ class EventFormDataManageController
         check_ajax_referer('event_form_update', 'nonce');
 
         $id = $_POST['id'] ?? 0;
-        $content = $_POST['content'] ?? '';
+        $content = $_POST['content'] ?? [];
+        $contentStr = json_encode($content);
 
         global $wpdb;
         $table_name = $wpdb->prefix . $this->table_name;
 
         $result = $wpdb->update(
             $table_name,
-            ['content' => $content],
+            ['content' => $contentStr],
             ['id' => $id],
             ['%s'],
             ['%d']
         );
-
         if ($result !== false) {
             wp_send_json_success(['message' => '更新が完了しました']);
         } else {
@@ -169,10 +180,84 @@ class EventFormDataManageController
         if (!$form) {
             wp_send_json_error(['message' => 'Form not found']);
         }
-
-        $form_data = json_decode($form->content, true);
+        $defaultContentObj = [
+            'your-name'=>'',
+            'your-email'=>'',
+            'your-message'=>'',
+        ];
+        $form_data = json_decode($form->content, true) ?? $defaultContentObj;
+        // error_log(print_r([
+        //     'content'=>$form->content,
+        //     'arr'=>$form_data,
+        // ], true));
 
         wp_send_json_success(['form_data' => $form_data]);
+    }
+
+    public function getFormFields()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+
+        check_ajax_referer('event_form_create', 'nonce');
+
+        $form_id = isset($_POST['form_id']) ? intval($_POST['form_id']) : 0;
+        if (!$form_id) {
+            wp_send_json_error(['message' => 'Invalid form ID']);
+        }
+
+        $form = WPCF7_ContactForm::get_instance($form_id);
+        if (!$form) {
+            wp_send_json_error(['message' => 'Form not found']);
+        }
+
+        $fields = [];
+        $form_fields = $form->scan_form_tags();
+        foreach ($form_fields as $field) {
+            if (!empty($field['name'])) {
+                $fields[] = $field['name'];
+            }
+        }
+        $fields = array_unique($fields);
+
+        wp_send_json_success(['fields' => $fields]);
+    }
+
+    public function ajaxCreate()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+
+        check_ajax_referer('event_form_create', 'nonce');
+
+        $form_id = isset($_POST['form_id']) ? intval($_POST['form_id']) : 0;
+        $content = isset($_POST['content']) ? $_POST['content'] : [];
+
+        if (!$form_id || !$content) {
+            wp_send_json_error(['message' => '必須項目が不足しています']);
+        }
+        $contentStr = json_encode($content);
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . $this->table_name;
+
+        $result = $wpdb->insert(
+            $table_name,
+            [
+                'form_id' => $form_id,
+                'content' => $contentStr,
+                'created_at' => current_time('mysql')
+            ],
+            ['%d', '%s', '%s']
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(['message' => '新規作成が完了しました']);
+        } else {
+            wp_send_json_error(['message' => '新規作成に失敗しました']);
+        }
     }
 
     public function exportCsv()
@@ -205,7 +290,11 @@ class EventFormDataManageController
         $headers = ['ID', '提出日時'];
         if (!empty($entries)) {
             $first_entry = json_decode($entries[0]->content, true);
-            $headers = array_merge($headers, array_keys($first_entry));
+            $extraColArr = [];
+            foreach (array_keys($first_entry) as $key) {
+                $extraColArr[] = EventFormDataManageService::getColumnMapForExport($key);
+            }
+            $headers = array_merge($headers, $extraColArr);
         }
         fputcsv($output, $headers);
 
