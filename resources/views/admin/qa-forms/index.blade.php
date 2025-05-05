@@ -249,13 +249,16 @@ const DetailsModal = {
             case 'your-email':
                 desc = 'メールアドレス';
                 break;
+            case 'email-title':
+                desc = 'タイトル';
+                break;
             case 'your-message':
                 desc = 'メッセージ';
                 break;
         }
         return desc;
     },
-    allowFields: ['your-name','your-email','your-message'],
+    allowFields: ['your-name','your-email','your-message', 'email-title'],
 };
 
 jQuery(document).ready(function($) {
